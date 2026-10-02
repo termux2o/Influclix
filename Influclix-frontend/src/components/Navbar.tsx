@@ -1,15 +1,17 @@
 // src/components/Navbar.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  SparkleIcon, 
-  SearchIcon, 
-  DashboardIcon, 
-  TargetIcon, 
-  LogoutIcon, 
-  LoginIcon 
-} from './Icons'; // <-- Import all icons
+import { apiCall } from '../config/Api';
+import { ENV } from '../config/Environment';
+import {
+  SparkleIcon,
+  SearchIcon,
+  DashboardIcon,
+  TargetIcon,
+  LogoutIcon,
+  LoginIcon,
+} from './Icons';
 
 interface NavbarProps {
   isLoggedIn?: boolean;
@@ -18,18 +20,26 @@ interface NavbarProps {
 
 const Navbar = ({ isLoggedIn = false, setIsLoggedIn }: NavbarProps) => {
   const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    if (setIsLoggedIn) setIsLoggedIn(false);
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    navigate('/');
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+
+    // 1. Ask backend to clear the httpOnly cookie
+    await apiCall('/auth/logout', { method: 'POST' });
+
+    // 2. Flip React state so ProtectedRoute sends the user out
+    setIsLoggedIn?.(false);
+
+    // 3. Redirect home (or to /login — your choice)
+    setLoggingOut(false);
+    navigate(ENV.ROUTES.HOME, { replace: true });
   };
 
   return (
     <div className="navbar-wrapper">
       <nav className="navbar">
-        {/* Brand Logo - Now using SparkleIcon component */}
         <div className="logo">
           <Link to="/" className="brand-logo-container">
             <span className="brand-icon-wrapper">
@@ -41,37 +51,36 @@ const Navbar = ({ isLoggedIn = false, setIsLoggedIn }: NavbarProps) => {
 
         <ul className="nav-links">
           <li><Link to="/" className="nav-btn">Home</Link></li>
-          
+
           {isLoggedIn ? (
             <>
-              {/* Search - Using SearchIcon instead of 🔍 */}
               <li>
                 <Link to="/search" className="nav-btn">
                   <SearchIcon size={16} /> Search
                 </Link>
               </li>
-              {/* Dashboard - Using DashboardIcon instead of 📊 */}
               <li>
                 <Link to="/dashboard" className="nav-btn">
                   <DashboardIcon size={16} /> Dashboard
                 </Link>
               </li>
-              {/* Demo Data - Using TargetIcon instead of 🎯 */}
               <li>
                 <Link to="/demo" className="nav-btn">
                   <TargetIcon size={16} /> Demo Data
                 </Link>
               </li>
-              {/* Logout - Using LogoutIcon instead of 🚪 */}
               <li>
-                <button onClick={handleLogout} className="nav-btn logout-btn">
-                  <LogoutIcon size={16} /> Logout
+                <button
+                  onClick={handleLogout}
+                  className="nav-btn logout-btn"
+                  disabled={loggingOut}
+                >
+                  <LogoutIcon size={16} /> {loggingOut ? 'Logging out…' : 'Logout'}
                 </button>
               </li>
             </>
           ) : (
             <>
-              {/* Login - Using LoginIcon instead of 🔑 */}
               <li>
                 <Link to="/login" className="nav-btn login-btn">
                   <LoginIcon size={16} /> Login

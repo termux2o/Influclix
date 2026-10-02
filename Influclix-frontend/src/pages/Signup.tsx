@@ -1,27 +1,55 @@
 // src/pages/Signup.tsx
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { apiCall } from "../config/Api";
+import { ENV } from "../config/Environment";
 
-// Remove setIsLoggedIn prop if not needed
+interface SignupResponse {
+  details: string;
+  status_code: number;
+}
+
 const Signup = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [company, setCompany] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [company, setCompany] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Demo signup - any credentials work
-    if (name && email && password) {
-      // Store signup info
-      localStorage.setItem('userName', name);
-      localStorage.setItem('userEmail', email);
-      localStorage.setItem('isLoggedIn', 'true');
-      navigate('/dashboard');
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    const { ok, details, status } = await apiCall<SignupResponse>("/auth/signup", {
+      method: "POST",
+      body: {
+        email,
+        password,
+        full_name: name || null,
+        company: company || null,
+      },
+    });
+
+    setLoading(false);
+
+    if (!ok) {
+      setError(details || `Signup failed (${status})`);
+      return;
     }
+
+    setSuccess(details || "User created successfully");
+
+    // Backend sets the httpOnly cookie on this response,
+    // so the user is already authenticated.
+    setTimeout(() => navigate(ENV.ROUTES.DASHBOARD), 800);
   };
 
   return (
@@ -29,12 +57,12 @@ const Signup = () => {
       <div className="auth-card">
         <h2>Create Account 🚀</h2>
         <p className="subtitle">Start finding influencers in India</p>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Full Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Enter your full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -44,53 +72,74 @@ const Signup = () => {
 
           <div className="form-group">
             <label>Company Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Enter your company name"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
+              required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Email Address</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Password</label>
-            <input 
-              type="password" 
-              placeholder="Create a password"
+            <input
+              type="password"
+              placeholder="Create a password (min 8 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
             />
           </div>
-          
-          <button type="submit" className="auth-btn">Create Account →</button>
+
+          {error && (
+            <div style={{
+              marginTop: "0.5rem",
+              padding: "0.7rem",
+              background: "#fee",
+              color: "#a00",
+              borderRadius: 8,
+              fontSize: "0.9rem",
+              textAlign: "center",
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          {success && (
+            <div style={{
+              marginTop: "0.5rem",
+              padding: "0.7rem",
+              background: "#efe",
+              color: "#060",
+              borderRadius: 8,
+              fontSize: "0.9rem",
+              textAlign: "center",
+
+            }}>
+              ✅ {success}
+            </div>
+          )}
+
+          <button type="submit" className="auth-btn" disabled={loading}>
+            {loading ? "Creating account…" : "Create Account →"}
+          </button>
         </form>
-        
+
         <div className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
-        </div>
-        <div style={{ 
-          marginTop: '1rem', 
-          padding: '0.8rem', 
-          background: '#f8f9fa', 
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          color: '#666',
-          textAlign: 'center'
-        }}>
-          🔑 Demo: Use any details to sign up
+          Already have an account? <Link to={ENV.ROUTES.LOGIN}>Login</Link>
         </div>
       </div>
     </div>
