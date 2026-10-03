@@ -600,3 +600,121 @@
     gap: 0.2rem;
   }
 }
+
+/* ============================================
+   App Loader
+   ============================================ */
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+}
+
+.app-loader-fullscreen {
+  min-height: 100vh;
+}
+
+/* Spinner wrapper */
+.app-loader-spinner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-loader-small  { width: 32px;  height: 32px; }
+.app-loader-medium { width: 48px;  height: 48px; }
+.app-loader-large  { width: 72px;  height: 72px; }
+
+/* Rotating ring */
+.app-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #e5e7eb;                 /* track */
+  border-top-color: #00a36c;                 /* brand green */
+  animation: app-loader-spin 0.9s linear infinite;
+}
+
+.app-loader-small .app-loader-ring  { border-width: 2px; }
+.app-loader-large .app-loader-ring  { border-width: 4px; }
+
+/* Inner pulse dot — adds polish */
+.app-loader-dot {
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: #00a36c;
+  opacity: 0.25;
+  animation: app-loader-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes app-loader-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes app-loader-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.25; }
+  50%      { transform: scale(1.6); opacity: 0.05; }
+}
+
+.app-loader-message {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================
+   App Error State
+   ============================================ */
+.app-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.app-error-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.app-error-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.app-error-message {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+.app-error-retry {
+  padding: 10px 22px;
+  background: #00a36c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.app-error-retry:hover {
+  background: #008a5b;
+}

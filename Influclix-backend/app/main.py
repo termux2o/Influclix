@@ -14,7 +14,7 @@ from app.core.rate_limit import limiter
 from app.core.bot_guard import BotGuardMiddleware
 from app.middleware.request_size import MaxBodySizeMiddleware
 from app.middleware.email_extractor import EmailExtractorMiddleware
-from app.routes import auth
+from app.routes import auth,influencers
 
 
 @asynccontextmanager
@@ -82,7 +82,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # ─── Routes ──────────────────────────────────────────────────
 app.include_router(auth.router)
-
+app.include_router(influencers.router)      # ← add this
 
 @app.get("/health")
 async def health():

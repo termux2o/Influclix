@@ -139,9 +139,16 @@ async def logout(request: Request, response: Response):
     },
     summary="Get current user",
 )
+@router.get(
+    "/me",
+    response_model=MeResponse,
+    responses={401: {"model": ErrorResponse}},
+    summary="Get current user",
+)
 @limiter.limit("120/minute")
 async def me(
-    request: Request,                      # required by slowapi
+    request: Request,
+    response: Response,
     current_user: dict = Depends(get_current_user),
 ):
     user_data = auth_service.serialize_user(current_user)

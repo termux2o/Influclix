@@ -10,22 +10,29 @@ interface Influencer {
 
 interface Props {
   influencer: Influencer;
+  onViewProfile?: () => void;
+  isPaid?: boolean;              // ← NEW (optional, defaults to false)
 }
 
-const InfluencerCard = ({ influencer }: Props) => {
+const InfluencerCard = ({ influencer, onViewProfile, isPaid = false }: Props) => {
   return (
-    <div className="influencer-card fade-in">
-      <div className="avatar-wrapper">
-        <img src={influencer.avatar} alt={influencer.name} />
-        <span className="platform-badge">{influencer.platform}</span>
-      </div>
+    <div className="influencer-card">
+      <img src={influencer.avatar} alt={influencer.name} />
       <h3>{influencer.name}</h3>
       <p className="handle">@{influencer.handle}</p>
-      <div className="stats">
+      <div className="card-stats">
         <span>👥 {influencer.followers}</span>
-        <span>❤️ {influencer.engagement}%</span>
+        <span>{influencer.platform}</span>
       </div>
-      <button className="view-btn">View Profile →</button>
+      <button
+        className="view-profile-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewProfile?.();
+        }}
+      >
+        View Profile
+      </button>
     </div>
   );
 };

@@ -7,7 +7,7 @@
 
 
 export const ENV = {
-  API_URL:  ("http://127.0.0.1:8000"),
+  API_URL:  ("http://localhost:8000"),
 
   // Route paths — keeps navigation strings in one place
   ROUTES: {
@@ -17,6 +17,7 @@ export const ENV = {
     DASHBOARD: "/dashboard",
     SEARCH: "/search",
     DEMO: "/demo",
+    PRICING: "/pricing",       // ← NEW
   },
 
   // Cookie / auth behavior hints (for the frontend)

@@ -11,6 +11,10 @@ Options (via env vars):
     ATTEMPTS        default: 6
 """
 
+""" curl "http://localhost:8000/influencers/demo" \
+  -H "User-Agent: Mozilla/5.0" \
+  -H "Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYWthc2gwMDAxLml0bUBnbWFpbC5jb20iLCJleHAiOjE3OTEwNDE4ODMsInR5cGUiOiJhY2Nlc3MifQ.2ipWLc_SMTApPMcXFI-W_yHYGCxdaIu7TkNz3PRApRg"""
+
 import os
 import sys
 import time

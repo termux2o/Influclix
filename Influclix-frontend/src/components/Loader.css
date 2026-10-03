@@ -1,0 +1,63 @@
+/* src/components/Loader.css */
+
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+}
+
+.app-loader-fullscreen {
+  min-height: 100vh;
+}
+
+.app-loader-spinner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-loader-small  { width: 32px;  height: 32px; }
+.app-loader-medium { width: 48px;  height: 48px; }
+.app-loader-large  { width: 72px;  height: 72px; }
+
+.app-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #e5e7eb;
+  border-top-color: #00a36c;
+  animation: app-loader-spin 0.9s linear infinite;
+}
+
+.app-loader-small .app-loader-ring { border-width: 2px; }
+.app-loader-large .app-loader-ring { border-width: 4px; }
+
+.app-loader-dot {
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: #00a36c;
+  opacity: 0.25;
+  animation: app-loader-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes app-loader-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes app-loader-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.25; }
+  50%      { transform: scale(1.6); opacity: 0.05; }
+}
+
+.app-loader-message {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}

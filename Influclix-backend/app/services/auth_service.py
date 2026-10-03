@@ -22,6 +22,11 @@ async def create_user(
         "hashed_password": hash_password(password),
         "full_name": full_name,
         "company": company,
+        "subscription_type": 0,
+        "subscription_started_at": None,
+        "subscription_ends_at": None,
+        "searches_used": 0,
+        "last_search_at": None,
         "created_at": now,
         "updated_at": now,
     }
@@ -51,6 +56,7 @@ def serialize_user(user: dict) -> dict:
         "email": user["email"],
         "full_name": user.get("full_name"),
         "company": user.get("company"),
+        "subscription_type": user.get("subscription_type", 0),   # ← NEW
         "created_at": user["created_at"],
         "updated_at": user.get("updated_at", user["created_at"]),
     }

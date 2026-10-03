@@ -1,7 +1,7 @@
 // src/App.tsx
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -11,15 +11,30 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import DemoDashboard from './pages/DemoDashboard';
+import Loader from './components/Loader';                        // ← NEW
+import { apiCall } from './config/Api';
+import Pricing from './pages/Pricing';                    // ← NEW
 
-// Import React for JSX
+
 import React from 'react';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [booting, setBooting] = useState(true);
 
-  // Protected Route wrapper - Fix: Use React.ReactNode instead of JSX.Element
+  // ── Ask the server on mount: "who am I?" ──
+  useEffect(() => {
+    (async () => {
+      const { ok } = await apiCall('/auth/me');
+      setIsLoggedIn(ok);
+      setBooting(false);
+    })();
+  }, []);
+
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (booting) {
+      return <Loader message="Checking your session…" size="large" fullScreen />;
+    }
     if (!isLoggedIn) {
       return <Navigate to="/login" replace />;
     }
@@ -35,8 +50,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
             <Route path="/signup" element={<Signup />} />
-            
-            {/* Protected Routes - Only show after login */}
+
             <Route path="/search" element={
               <ProtectedRoute>
                 <Search />
@@ -52,13 +66,12 @@ function App() {
                 <Dashboard />
               </ProtectedRoute>
             } />
-            
-            {/* Demo Page - Shows how data will look */}
             <Route path="/demo" element={
               <ProtectedRoute>
                 <DemoDashboard />
               </ProtectedRoute>
             } />
+             <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />   {/* ← NEW */}
           </Routes>
         </main>
         <Footer />

@@ -13,6 +13,12 @@ async def connect_to_mongo() -> None:
 
     # --- Create indexes (safe to call every startup) ---
     await mongodb.db.users.create_index("email", unique=True)
+    await mongodb.db["influencers"].create_index([("category", 1), ("followers", -1)])
+    # user_activity indexes
+    await mongodb.db["user_activity"].create_index([("user_id", 1), ("at", -1)])
+    await mongodb.db["user_activity"].create_index([("user_id", 1), ("action", 1)])
+    await mongodb.db["user_activity"].create_index("at", expireAfterSeconds=60 * 60 * 24 * 180)
+
 
 async def close_mongo_connection() -> None:
     if mongodb.client:

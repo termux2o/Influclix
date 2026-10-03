@@ -10,7 +10,12 @@ class SignupRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=128)
     full_name: str | None = Field(default=None, max_length=120)
     company: str | None = Field(default=None, max_length=120)
-
+    subscription_type:int =Field(default=0, description="User's subscription type, 0 for free, 1 for paid")
+    subscription_started_at: datetime | None = Field(default=None, description="The date and time when the user's subscription started")
+    subscription_ends_at: datetime | None = Field(default=None, description="The date and time when the user's subscription ends")
+    searches_used:int =Field(default=0, description="The number of searches the user has used")
+    last_search_at: datetime | None = Field(default=None, description="The date and time when the user last performed a search")    
+    
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -62,6 +67,7 @@ class MeResponse(BaseModel):
     email: EmailStr
     full_name: str | None = None
     company: str | None = None
+    subscription_type: int = 0       
     created_at: datetime
     updated_at: datetime
 

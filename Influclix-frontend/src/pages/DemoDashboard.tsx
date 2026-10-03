@@ -1,217 +1,177 @@
 // src/pages/DemoDashboard.tsx
-
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-
-// Mock Data
-const MOCK_INFLUENCERS = [
-  {
-    id: 1,
-    name: 'Priya Sharma',
-    handle: 'priyasharma',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    platform: 'Instagram',
-    followers: '2.5M',
-    engagement: '4.8%',
-    location: 'Mumbai',
-    niche: 'Fashion & Lifestyle',
-    email: 'priya@example.com',
-    age: '25-34',
-    gender: '70% Female',
-    topCities: ['Mumbai', 'Delhi', 'Bangalore'],
-    recentPosts: 12,
-    avgLikes: '45K',
-    growthRate: '+8.2%',
-    verified: true
-  },
-  {
-    id: 2,
-    name: 'Rahul Kumar',
-    handle: 'rahulkumar',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    platform: 'YouTube',
-    followers: '1.8M',
-    engagement: '6.2%',
-    location: 'Delhi',
-    niche: 'Tech & Gaming',
-    email: 'rahul@example.com',
-    age: '18-24',
-    gender: '80% Male',
-    topCities: ['Delhi', 'Mumbai', 'Pune'],
-    recentPosts: 8,
-    avgLikes: '120K',
-    growthRate: '+12.5%',
-    verified: true
-  },
-  {
-    id: 3,
-    name: 'Ananya Singh',
-    handle: 'ananyasingh',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    platform: 'Instagram',
-    followers: '3.2M',
-    engagement: '5.1%',
-    location: 'Bangalore',
-    niche: 'Food & Travel',
-    email: 'ananya@example.com',
-    age: '25-34',
-    gender: '65% Female',
-    topCities: ['Bangalore', 'Mumbai', 'Delhi'],
-    recentPosts: 15,
-    avgLikes: '62K',
-    growthRate: '+6.7%',
-    verified: false
-  },
-  {
-    id: 4,
-    name: 'Vikram Patel',
-    handle: 'vikrampatel',
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    platform: 'TikTok',
-    followers: '4.1M',
-    engagement: '7.3%',
-    location: 'Mumbai',
-    niche: 'Comedy & Entertainment',
-    email: 'vikram@example.com',
-    age: '18-24',
-    gender: '55% Male',
-    topCities: ['Mumbai', 'Delhi', 'Chennai'],
-    recentPosts: 20,
-    avgLikes: '85K',
-    growthRate: '+15.3%',
-    verified: true
-  },
-  {
-    id: 5,
-    name: 'Neha Gupta',
-    handle: 'nehagupta',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    platform: 'YouTube',
-    followers: '890K',
-    engagement: '4.2%',
-    location: 'Chennai',
-    niche: 'Education & Career',
-    email: 'neha@example.com',
-    age: '25-34',
-    gender: '60% Female',
-    topCities: ['Chennai', 'Bangalore', 'Hyderabad'],
-    recentPosts: 6,
-    avgLikes: '45K',
-    growthRate: '+4.1%',
-    verified: false
-  }
-];
+import { useState } from "react";
+import { useDemoData, DemoInfluencer } from "../hooks/useDemoData";
+import Loader from "../components/Loader";
+import ErrorState from "../components/ErrorState";
+// Format large follower numbers → "1.2M", "45K", "892"
+const formatFollowers = (n: number): string => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+};
 
 const DemoDashboard = () => {
-  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { data, loading, error } = useDemoData();
+  const [selected, setSelected] = useState<DemoInfluencer | null>(null);
+
+      
+    if (loading) {
+      return (
+        <div className="demo-dashboard">
+          <Loader message="Loading demo data…" size="large" />
+        </div>
+      );
+    }
+
+    if (error || !data) {
+      return (
+        <div className="demo-dashboard">
+          <ErrorState
+            message={error || "No demo data available."}
+            onRetry={() => window.location.reload()}
+          />
+        </div>
+      );
+    }
 
   return (
     <div className="demo-dashboard">
       <div className="demo-header">
         <div>
           <h1>🎯 Influencer Discovery Demo</h1>
-          <p>Showing how influencer data will look in your dashboard</p>
-        </div>
-        <div className="demo-controls">
-          <button 
-            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            📱 Grid
-          </button>
-          <button 
-            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            📋 List
-          </button>
+          <p>
+            Top creators by followers in each category — pulled live from your
+            database.
+          </p>
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* Summary stats */}
       <div className="demo-stats">
         <div className="stat-card">
           <div className="stat-icon">👥</div>
           <div className="stat-info">
             <h3>Total Influencers</h3>
-            <p className="stat-number">{MOCK_INFLUENCERS.length}</p>
+            <p className="stat-number">{data.total_influencers}</p>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">📊</div>
+          <div className="stat-icon">🗂️</div>
           <div className="stat-info">
-            <h3>Avg Engagement</h3>
-            <p className="stat-number">5.5%</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📈</div>
-          <div className="stat-info">
-            <h3>Avg Growth</h3>
-            <p className="stat-number">+9.3%</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📍</div>
-          <div className="stat-info">
-            <h3>Top Cities</h3>
-            <p className="stat-number">5 Cities</p>
+            <h3>Categories</h3>
+            <p className="stat-number">{data.total_categories}</p>
           </div>
         </div>
       </div>
 
-      {/* Influencer Grid/List */}
-      <div className="demo-section">
-        <h2>📋 Influencer Database</h2>
-        <div className={`influencer-container ${viewMode}`}>
-          {MOCK_INFLUENCERS.map((influencer) => (
-            <div 
-              key={influencer.id} 
-              className={`influencer-item ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}
-              onClick={() => setSelectedInfluencer(influencer)}
-            >
-              <img src={influencer.avatar} alt={influencer.name} />
-              <div className="influencer-info">
-                <div className="influencer-header">
-                  <h3>{influencer.name}</h3>
-                  {influencer.verified && <span className="verified-badge">✅ Verified</span>}
-                </div>
-                <p className="handle">@{influencer.handle}</p>
-                <div className="influencer-tags">
-                  <span className="tag platform">{influencer.platform}</span>
-                  <span className="tag niche">{influencer.niche}</span>
-                  <span className="tag location">📍 {influencer.location}</span>
-                </div>
-                <div className="influencer-stats">
-                  <span>👥 {influencer.followers}</span>
-                  <span>❤️ {influencer.engagement}</span>
-                  <span>📈 {influencer.growthRate}</span>
-                </div>
-                <div className="influencer-actions">
-                  <button className="view-profile-btn">View Profile</button>
-                  <button className="contact-btn">📧 Get Email</button>
+      {/* One section per category */}
+      {data.groups.map((group) => (
+        <div className="demo-section" key={group.category}>
+          <h2>
+            📂 {group.category}{" "}
+            <span style={{ fontSize: "0.7em", color: "#6b7280" }}>
+              ({group.count} total — showing top {group.influencers.length})
+            </span>
+          </h2>
+
+          <div className="influencer-container grid">
+            {group.influencers.map((inf) => (
+              <div
+                key={inf.id}
+                className="influencer-item grid-view"
+                onClick={() => setSelected(inf)}
+              >
+                <img
+                  src={
+                    inf.profile_image_url ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                      inf.display_name || inf.username
+                    )}`
+                  }
+                  alt={inf.display_name || inf.username}
+                />
+                <div className="influencer-info">
+                  <div className="influencer-header">
+                    <h3>{inf.display_name || inf.username}</h3>
+                    {inf.verified && (
+                      <span className="verified-badge">✅ Verified</span>
+                    )}
+                  </div>
+                  <p className="handle">@{inf.username}</p>
+
+                  <div className="influencer-tags">
+                    {inf.category && (
+                      <span className="tag platform">{inf.category}</span>
+                    )}
+                    {inf.tags.slice(0, 2).map((t) => (
+                      <span className="tag niche" key={t}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="influencer-stats">
+                    <span>👥 {formatFollowers(inf.followers)}</span>
+                    {inf.following > 0 && (
+                      <span>👣 {formatFollowers(inf.following)}</span>
+                    )}
+                  </div>
+
+                  <div className="influencer-actions">
+                    <button className="view-profile-btn">View Profile</button>
+                    <button
+                      className="contact-btn"
+                      disabled={!inf.email}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (inf.email) window.location.href = `mailto:${inf.email}`;
+                      }}
+                    >
+                      {inf.email ? "📧 Email" : "🔒 No Email"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
 
-      {/* Selected Influencer Details - Modal/Popup */}
-      {selectedInfluencer && (
-        <div className="demo-modal" onClick={() => setSelectedInfluencer(null)}>
-          <div className="demo-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedInfluencer(null)}>✕</button>
-            
+      {/* Modal */}
+      {selected && (
+        <div className="demo-modal" onClick={() => setSelected(null)}>
+          <div
+            className="demo-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setSelected(null)}
+            >
+              ✕
+            </button>
+
             <div className="modal-profile">
-              <img src={selectedInfluencer.avatar} alt={selectedInfluencer.name} className="modal-avatar" />
+              <img
+                src={
+                  selected.profile_image_url ||
+                  `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                    selected.display_name || selected.username
+                  )}`
+                }
+                alt={selected.display_name || selected.username}
+                className="modal-avatar"
+              />
               <div className="modal-header-info">
-                <h2>{selectedInfluencer.name}</h2>
-                <p className="modal-handle">@{selectedInfluencer.handle}</p>
+                <h2>{selected.display_name || selected.username}</h2>
+                <p className="modal-handle">@{selected.username}</p>
                 <div className="modal-badges">
-                  <span className="badge platform">{selectedInfluencer.platform}</span>
-                  <span className="badge verified">{selectedInfluencer.verified ? '✅ Verified' : '🔄 Unverified'}</span>
+                  {selected.category && (
+                    <span className="badge platform">{selected.category}</span>
+                  )}
+                  <span className="badge verified">
+                    {selected.verified ? "✅ Verified" : "🔄 Unverified"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -219,53 +179,80 @@ const DemoDashboard = () => {
             <div className="modal-grid">
               <div className="modal-stat">
                 <h4>Followers</h4>
-                <p>{selectedInfluencer.followers}</p>
+                <p>{formatFollowers(selected.followers)}</p>
               </div>
               <div className="modal-stat">
-                <h4>Engagement</h4>
-                <p>{selectedInfluencer.engagement}</p>
-              </div>
-              <div className="modal-stat">
-                <h4>Growth Rate</h4>
-                <p>{selectedInfluencer.growthRate}</p>
-              </div>
-              <div className="modal-stat">
-                <h4>Recent Posts</h4>
-                <p>{selectedInfluencer.recentPosts}</p>
+                <h4>Following</h4>
+                <p>{formatFollowers(selected.following)}</p>
               </div>
             </div>
 
             <div className="modal-details">
+              {selected.bio && (
+                <div className="detail-row">
+                  <span className="detail-label">📝 Bio:</span>
+                  <span>{selected.bio}</span>
+                </div>
+              )}
               <div className="detail-row">
-                <span className="detail-label">📍 Location:</span>
-                <span>{selectedInfluencer.location}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">🎯 Niche:</span>
-                <span>{selectedInfluencer.niche}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">👤 Age Group:</span>
-                <span>{selectedInfluencer.age}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">⚥ Gender:</span>
-                <span>{selectedInfluencer.gender}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">🏙️ Top Cities:</span>
-                <span>{selectedInfluencer.topCities.join(', ')}</span>
+                <span className="detail-label">🎯 Tags:</span>
+                <span>{selected.tags.join(", ") || "—"}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">📧 Email:</span>
-                <span className="email-value">{selectedInfluencer.email}</span>
+                <span className="email-value">
+                  {selected.email || "Not available"}
+                </span>
               </div>
+
+              {selected.instagram && (
+                <div className="detail-row">
+                  <span className="detail-label">📸 Instagram:</span>
+                  <a
+                    href={selected.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {selected.instagram}
+                  </a>
+                </div>
+              )}
+              {selected.youtube && (
+                <div className="detail-row">
+                  <span className="detail-label">▶️ YouTube:</span>
+                  <a
+                    href={selected.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {selected.youtube}
+                  </a>
+                </div>
+              )}
+              {selected.website && (
+                <div className="detail-row">
+                  <span className="detail-label">🌐 Website:</span>
+                  <a
+                    href={selected.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {selected.website}
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="modal-actions">
-              <button className="primary-btn">📧 Contact Now</button>
+              {selected.email && (
+                <a
+                  className="primary-btn"
+                  href={`mailto:${selected.email}`}
+                >
+                  📧 Contact Now
+                </a>
+              )}
               <button className="secondary-btn">💾 Save to List</button>
-              <button className="secondary-btn">📊 View Analytics</button>
             </div>
           </div>
         </div>
