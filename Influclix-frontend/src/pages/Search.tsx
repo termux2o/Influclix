@@ -9,6 +9,7 @@ import { useFilterOptions } from "../hooks/useFilterOptions";
 import { useSearchInfluencers, SearchInfluencer } from "../hooks/useSearchInfluencers";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useSearchUsage } from "../hooks/useSearchUsage";
+import { useOutreachAgent } from "../hooks/useOutreachAgent";
 
 const formatFollowers = (n: number): string => {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -23,6 +24,7 @@ const Search = () => {
 
   const { usage, refresh: refreshUsage } = useSearchUsage();
   const { options, loading: optionsLoading } = useFilterOptions();
+  const outreach = useOutreachAgent();
 
   const [draftFilters, setDraftFilters] = useState<any>({
     category: null,
@@ -38,6 +40,7 @@ const Search = () => {
   const [activeFilters, setActiveFilters] = useState<any>({});
   const [selected, setSelected] = useState<SearchInfluencer | null>(null);
   const [quotaHit, setQuotaHit] = useState(false);
+  const [brief, setBrief] = useState("");
 
   const backendFilters = useMemo(() => {
     const payload: any = {};
@@ -51,7 +54,6 @@ const Search = () => {
       if (!isNaN(max)) payload.max_followers = max;
     }
 
-    // Paid-only filters — only sent when user is paid
     if (isPaid) {
       if (activeFilters.has_email) payload.has_email = true;
       if (activeFilters.has_phone) payload.has_phone = true;
@@ -64,16 +66,12 @@ const Search = () => {
 
   const { data, loading, error, refetch } = useSearchInfluencers(backendFilters);
 
-  // Refetch usage after every successful search
   useEffect(() => {
     if (!loading && !error && data) refreshUsage();
   }, [data, loading, error, refreshUsage]);
 
-  // Detect 402 quota errors
   useEffect(() => {
-    if (error && error.toLowerCase().includes("limit")) {
-      setQuotaHit(true);
-    }
+    if (error && error.toLowerCase().includes("limit")) setQuotaHit(true);
   }, [error]);
 
   const handleApply = () => {
@@ -94,6 +92,31 @@ const Search = () => {
     });
     setActiveFilters({});
     setQuotaHit(false);
+  };
+
+  const closeInfluencerModal = () => {
+    setSelected(null);
+    setBrief("");
+    outreach.reset();
+  };
+
+  const handleGenerateOutreach = async () => {
+    if (!selected) return;
+    const text =
+      brief.trim() ||
+      "We'd love to collaborate with you on an upcoming campaign. Let us know if you're interested.";
+
+    const res = await outreach.generate({
+      influencer_id: selected.id,
+      campaign_brief: text,
+      brand_name: user?.company || "Your Brand",
+      tone: "friendly",
+    });
+
+    if (!res.ok) {
+      // eslint-disable-next-line no-alert
+      alert(res.details || "Failed to generate outreach email");
+    }
   };
 
   return (
@@ -121,7 +144,6 @@ const Search = () => {
 
       {/* Results */}
       <div className="search-results">
-        {/* Usage banner for free users */}
         {!isPaid && usage && (
           <div className={`usage-banner ${usage.remaining === 0 ? "exhausted" : ""}`}>
             <span>
@@ -129,10 +151,7 @@ const Search = () => {
               <strong>{usage.limit}</strong> free searches.
             </span>
             {usage.remaining === 0 ? (
-              <button
-                className="upgrade-cta"
-                onClick={() => navigate("/pricing")}
-              >
+              <button className="upgrade-cta" onClick={() => navigate("/pricing")}>
                 ⚡ Upgrade to continue
               </button>
             ) : (
@@ -157,9 +176,7 @@ const Search = () => {
           <div className="usage-exceeded">
             <h2>Free search limit reached</h2>
             <p>You've used all {usage?.limit} free searches.</p>
-            <button onClick={() => navigate("/pricing")}>
-              See upgrade options
-            </button>
+            <button onClick={() => navigate("/pricing")}>See upgrade options</button>
           </div>
         ) : error ? (
           <ErrorState message={error} onRetry={refetch} />
@@ -203,14 +220,11 @@ const Search = () => {
         )}
       </div>
 
-      {/* Modal */}
+      {/* ── Influencer Modal ── */}
       {selected && (
-        <div className="demo-modal" onClick={() => setSelected(null)}>
-          <div
-            className="demo-modal-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button className="modal-close" onClick={() => setSelected(null)}>
+        <div className="demo-modal" onClick={closeInfluencerModal}>
+          <div className="demo-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeInfluencerModal}>
               ✕
             </button>
 
@@ -263,7 +277,6 @@ const Search = () => {
                 <span>{selected.tags.join(", ") || "—"}</span>
               </div>
 
-              {/* Email — locked for free users */}
               <div className="detail-row">
                 <span className="detail-label">📧 Email:</span>
                 {isPaid ? (
@@ -283,11 +296,7 @@ const Search = () => {
               {selected.instagram && (
                 <div className="detail-row">
                   <span className="detail-label">📸 Instagram:</span>
-                  <a
-                    href={selected.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={selected.instagram} target="_blank" rel="noopener noreferrer">
                     {selected.instagram}
                   </a>
                 </div>
@@ -296,11 +305,7 @@ const Search = () => {
               {selected.youtube && (
                 <div className="detail-row">
                   <span className="detail-label">▶️ YouTube:</span>
-                  <a
-                    href={selected.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={selected.youtube} target="_blank" rel="noopener noreferrer">
                     {selected.youtube}
                   </a>
                 </div>
@@ -309,32 +314,124 @@ const Search = () => {
               {selected.website && (
                 <div className="detail-row">
                   <span className="detail-label">🌐 Website:</span>
-                  <a
-                    href={selected.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={selected.website} target="_blank" rel="noopener noreferrer">
                     {selected.website}
                   </a>
                 </div>
               )}
             </div>
 
+            {/* ── AI Outreach Section ── */}
+            {isPaid ? (
+              <div className="outreach-brief-wrapper">
+                <label>Campaign brief (optional)</label>
+                <textarea
+                  placeholder="e.g. We're launching an eco-friendly skincare line and looking for lifestyle + beauty creators."
+                  value={brief}
+                  onChange={(e) => setBrief(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            ) : null}
+
             <div className="modal-actions">
+              {isPaid ? (
+                <button
+                  className="ai-outreach-btn"
+                  onClick={handleGenerateOutreach}
+                  disabled={outreach.loading}
+                >
+                  {outreach.loading ? "✨ Generating…" : "✨ Generate Outreach Email"}
+                </button>
+              ) : (
+                <button
+                  className="ai-outreach-btn locked"
+                  onClick={() => navigate("/pricing")}
+                >
+                  🔒 AI Outreach (Pro)
+                </button>
+              )}
+
               {isPaid && selected.email && (
                 <a className="primary-btn" href={`mailto:${selected.email}`}>
                   📧 Contact Now
                 </a>
               )}
               {!isPaid && (
-                <button
-                  className="primary-btn"
-                  onClick={() => navigate("/pricing")}
-                >
+                <button className="primary-btn" onClick={() => navigate("/pricing")}>
                   ⚡ Upgrade to Contact
                 </button>
               )}
               <button className="secondary-btn">💾 Save to List</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── AI Outreach Result Modal ── */}
+      {outreach.result && (
+        <div
+          className="demo-modal"
+          style={{ zIndex: 1100 }}
+          onClick={() => outreach.reset()}
+        >
+          <div
+            className="demo-modal-content outreach-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="modal-close" onClick={() => outreach.reset()}>
+              ✕
+            </button>
+
+            <div className="outreach-header">
+              <h2>✨ Generated Outreach Email</h2>
+              <p className="outreach-meta">
+                Model: {outreach.result.model} · {outreach.result.latency_ms}ms
+              </p>
+            </div>
+
+            <div className="outreach-field">
+              <label>Subject</label>
+              <div className="outreach-subject">{outreach.result.subject}</div>
+            </div>
+
+            <div className="outreach-field">
+              <label>Body</label>
+              <textarea
+                className="outreach-body"
+                value={outreach.result.body}
+                readOnly
+                rows={14}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="primary-btn"
+                onClick={() => {
+                  const full = `Subject: ${outreach.result!.subject}\n\n${outreach.result!.body}`;
+                  navigator.clipboard.writeText(full);
+                  // eslint-disable-next-line no-alert
+                  alert("Copied to clipboard!");
+                }}
+              >
+                📋 Copy Email
+              </button>
+
+              {selected?.email && (
+                <a
+                  className="secondary-btn"
+                  href={`mailto:${selected.email}?subject=${encodeURIComponent(
+                    outreach.result.subject
+                  )}&body=${encodeURIComponent(outreach.result.body)}`}
+                >
+                  📧 Open in Mail App
+                </a>
+              )}
+
+              <button className="secondary-btn" onClick={() => outreach.reset()}>
+                Close
+              </button>
             </div>
           </div>
         </div>

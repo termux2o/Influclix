@@ -18,6 +18,10 @@ async def connect_to_mongo() -> None:
     await mongodb.db["user_activity"].create_index([("user_id", 1), ("at", -1)])
     await mongodb.db["user_activity"].create_index([("user_id", 1), ("action", 1)])
     await mongodb.db["user_activity"].create_index("at", expireAfterSeconds=60 * 60 * 24 * 180)
+    # agent_runs indexes
+    await mongodb.db["agent_runs"].create_index([("user_id", 1), ("at", -1)])
+    await mongodb.db["agent_runs"].create_index([("agent", 1), ("at", -1)])
+    await mongodb.db["agent_runs"].create_index("at", expireAfterSeconds=60 * 60 * 24 * 90)
 
 
 async def close_mongo_connection() -> None:

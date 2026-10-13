@@ -1,0 +1,211 @@
+# app/agents/outreach_agent.py
+import json
+import logging
+from typing import Any
+import re
+
+from app.agents.base import BaseAgent
+from app.agents.prompts import load_prompt
+
+logger = logging.getLogger("agents.outreach")
+
+_SYSTEM = load_prompt("outreach_system.txt")
+
+
+class OutreachAgent(BaseAgent):
+    name = "outreach_writer"
+
+    async def write(
+        self,
+        creator: dict[str, Any],
+        campaign_brief: str,
+        *,
+        brand_name: str | None = None,
+        tone: str = "friendly",
+    ) -> dict[str, Any]:
+        """
+        Generate a personalized outreach email.
+
+        creator: raw influencer doc (or serialized) — we only use a subset
+        campaign_brief: one-paragraph description of the campaign
+        brand_name: optional, used in signature
+        tone: friendly | professional | casual | enthusiastic
+        """
+        user_prompt = self._build_user_prompt(creator, campaign_brief, brand_name, tone)
+
+        text, meta = await self._chat(
+            system=_SYSTEM,
+            user=user_prompt,
+            temperature=0.8,
+            max_tokens=600,
+            response_format_json=True,
+        )
+
+        subject, body = self._parse(text)
+        return {
+            "subject": subject,
+            "body": body,
+            "meta": meta,
+        }
+
+    # ─────────────────────────────────────────────
+    def _build_user_prompt(
+        self,
+        creator: dict[str, Any],
+        campaign_brief: str,
+        brand_name: str | None,
+        tone: str,
+    ) -> str:
+        # Only send the fields that matter — smaller prompt = cheaper + faster
+        card = {
+            "username": creator.get("username"),
+            "display_name": creator.get("display_name"),
+            "bio": creator.get("bio"),
+            "category": creator.get("category"),
+            "tags": creator.get("tags") or [],
+            "followers": creator.get("followers"),
+            "instagram": creator.get("instagram"),
+            "youtube": creator.get("youtube"),
+            "location": creator.get("location"),
+        }
+
+        return json.dumps(
+            {
+                "creator": card,
+                "campaign_brief": campaign_brief,
+                "brand_name": brand_name or "[Your Brand]",
+                "tone": tone,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    def _parse(self, text: str) -> tuple[str, str]:
+        """
+        Robust parser. Handles:
+        1. SUBJECT: ... --- BODY: ... (preferred format)
+        2. Raw JSON: {"subject": "...", "body": "..."}
+        3. JSON in markdown fences
+        4. Plain text (first line = subject, rest = body)
+        """
+        import json as _json
+        import re as _re
+
+        raw = (text or "").strip()
+        if not raw:
+            return "Collaboration opportunity", ""
+
+        # ── Strip markdown fences ────────────────────────────
+        if raw.startswith("```"):
+            raw = raw.lstrip("`")
+            # drop the language tag ("json", "text", ...)
+            first_nl = raw.find("\n")
+            if first_nl != -1 and first_nl < 15:
+                raw = raw[first_nl + 1 :]
+            raw = raw.rstrip("`").strip()
+
+        # ── Try to locate a JSON object anywhere in the text ──
+        # This catches: "{...}"  and  "some prefix {...} some suffix"
+        json_match = _re.search(r"\{.*\}", raw, _re.DOTALL)
+        if json_match:
+            candidate = json_match.group(0)
+            # strip trailing commas before } or ]
+            candidate_clean = _re.sub(r",\s*([}\]])", r"\1", candidate)
+            try:
+                data = _json.loads(candidate_clean)
+                if isinstance(data, dict):
+                    subject = self._to_clean_string(data.get("subject"))
+                    body = self._flatten_body(data.get("body"))
+                    if subject and body:
+                        return subject, body
+                    # if only one of them is present, merge with fallback
+                    if body and not subject:
+                        return "Collaboration opportunity", body
+                    if subject and not body:
+                        return subject, raw
+            except _json.JSONDecodeError:
+                pass  # fall through to next strategies
+
+        # ── SUBJECT / --- / BODY format ──────────────────────
+        if "---" in raw:
+            head, _, tail = raw.partition("---")
+            subject = head.split("SUBJECT:", 1)[-1].strip().strip('"').strip()
+            body = tail.strip()
+            if body.upper().startswith("BODY:"):
+                body = body[5:].lstrip()
+            body = body.strip().strip('"').strip()
+            if subject and body and subject != "{":
+                return subject, body
+
+        # ── Fallback: first non-empty line is subject, rest is body ──
+        lines = [ln for ln in raw.splitlines() if ln.strip()]
+        if len(lines) >= 2:
+            subject = lines[0].replace("SUBJECT:", "").strip().strip('"').strip()
+            # Reject a subject that's obviously JSON junk
+            if subject and subject not in ("{", "}", "[", "]", '"'):
+                body = "\n".join(lines[1:]).strip()
+                if body:
+                    return subject, body
+
+        # ── Last resort ──────────────────────────────────────
+        return "Collaboration opportunity", raw
+
+
+    def _to_clean_string(self, val) -> str:
+        """Turn a JSON value into a clean subject-like string."""
+        if val is None:
+            return ""
+        if isinstance(val, str):
+            return val.strip()
+        if isinstance(val, (int, float)):
+            return str(val)
+        # dicts/lists as subject: join values
+        if isinstance(val, dict):
+            for v in val.values():
+                s = self._to_clean_string(v)
+                if s:
+                    return s
+        if isinstance(val, list):
+            for v in val:
+                s = self._to_clean_string(v)
+                if s:
+                    return s
+        return ""
+
+
+    def _flatten_body(self, val) -> str:
+        """Turn any JSON value into a clean multi-paragraph body string."""
+        if val is None:
+            return ""
+        if isinstance(val, str):
+            return val.strip()
+        if isinstance(val, dict):
+            # Common nested shapes: {"greeting":..., "main":..., "cta":...}
+            # or {"opening":..., "body":...}
+            parts = []
+            for v in val.values():
+                s = self._flatten_body(v)
+                if s:
+                    parts.append(s)
+            return "\n\n".join(parts)
+        if isinstance(val, list):
+            return "\n\n".join(self._flatten_body(v) for v in val if v)
+        return str(val).strip()
+
+    def _flatten_field(self, val) -> str:
+        """Turn a string-or-nested-dict into a clean string."""
+        if val is None:
+            return ""
+        if isinstance(val, str):
+            return val.strip()
+        if isinstance(val, dict):
+            # Join sub-fields with paragraph breaks
+            parts = []
+            for k, v in val.items():
+                piece = self._flatten_field(v)
+                if piece:
+                    parts.append(piece)
+            return "\n\n".join(parts)
+        if isinstance(val, list):
+            return "\n\n".join(self._flatten_field(v) for v in val if v)
+        return str(val)

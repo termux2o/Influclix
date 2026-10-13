@@ -17,17 +17,22 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
-    # CORS
-    FRONTEND_ORIGIN: str = "http://localhost:3000"
+    # ─── CORS: multiple origins ─────────────────────────
+    FRONTEND_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ]
 
-    # ─── NEW: Redis + rate limiting ─────────────────────
+    # ─── Redis + rate limiting ──────────────────────────
     REDIS_URL: str = "redis://localhost:6380/0"
 
     # Global (per-IP) limits
-    RATE_LIMIT_GLOBAL: str = "300/minute"      # any IP, any endpoint
-    RATE_LIMIT_LOGIN: str = "5/minute"         # strict on login
-    RATE_LIMIT_SIGNUP: str = "3/minute"        # strict on signup
-    RATE_LIMIT_DEFAULT: str = "60/minute"      # fallback for other routes
+    RATE_LIMIT_GLOBAL: str = "300/minute"
+    RATE_LIMIT_LOGIN: str = "5/minute"
+    RATE_LIMIT_SIGNUP: str = "3/minute"
+    RATE_LIMIT_DEFAULT: str = "60/minute"
 
     # Max request body size (bytes) — 1 MB default
     MAX_REQUEST_BODY_BYTES: int = 1_048_576

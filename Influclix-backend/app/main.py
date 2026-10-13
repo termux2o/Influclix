@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.routes import auth, influencers, agents     # ← add agents
 
 from app.config import settings
 from app.database import connect_to_mongo, close_mongo_connection
@@ -33,10 +34,13 @@ app.add_middleware(MaxBodySizeMiddleware)      # 1. cheapest check
 app.add_middleware(BotGuardMiddleware)         # 2. UA filtering
 app.add_middleware(EmailExtractorMiddleware)   # 3. parse body once
 app.add_middleware(SlowAPIMiddleware)          # 4. rate limit
+app.include_router(auth.router)
+app.include_router(influencers.router)
+app.include_router(agents.router)  
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_ORIGIN],
+    allow_origins=settings.FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

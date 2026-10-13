@@ -3126,3 +3126,210 @@ body {
 .locked-contact:hover {
   background: #fde68a;
 }
+
+/* #================ AI agent css */
+.outreach-brief-wrapper {
+  margin: 16px 0 0;
+}
+
+.outreach-brief-wrapper label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.outreach-brief-wrapper textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 70px;
+}
+
+.outreach-brief-wrapper textarea:focus {
+  outline: none;
+  border-color: #00a36c;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 163, 108, 0.1);
+}
+
+.ai-outreach-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+}
+
+.ai-outreach-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+}
+
+.ai-outreach-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ai-outreach-btn.locked {
+  background: #e5e7eb;
+  color: #6b7280;
+  box-shadow: none;
+}
+
+.outreach-modal {
+  max-width: 640px;
+}
+
+.outreach-header h2 {
+  font-size: 20px;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.outreach-meta {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0 0 20px;
+}
+
+.outreach-field {
+  margin-bottom: 18px;
+}
+
+.outreach-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.outreach-subject {
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.outreach-body {
+  width: 100%;
+  padding: 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  resize: vertical;
+  min-height: 200px;
+}
+
+/* ============================================
+   Campaign Brief (AI Outreach Input)
+   ============================================ */
+
+.outreach-brief-wrapper {
+  display: block;
+  width: 100%;
+  margin: 16px 0 0;
+  padding: 0 24px;              /* ← matches the modal's internal padding */
+  box-sizing: border-box;
+  clear: both;                  /* prevents float overlap */
+}
+
+.outreach-brief-wrapper label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.outreach-brief-wrapper textarea {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  max-height: 200px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
+  resize: vertical;
+  box-sizing: border-box;       /* ← critical: keeps padding inside width */
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.outreach-brief-wrapper textarea:focus {
+  border-color: #00a36c;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 163, 108, 0.1);
+}
+
+.outreach-brief-wrapper textarea::placeholder {
+  color: #9ca3af;
+}
+/* ═══════════════════════════════════════════════════════
+   FORCE the AI Outreach result modal above everything
+   ═══════════════════════════════════════════════════════ */
+
+.demo-modal.outreach-result-modal,
+.demo-modal[style*="z-index"] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 999999 !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.demo-modal.outreach-result-modal .demo-modal-content,
+.demo-modal[style*="z-index"] .demo-modal-content {
+  position: relative !important;
+  z-index: 1000000 !important;
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  padding: 32px !important;
+  max-width: 640px !important;
+  width: 100% !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5) !important;
+  transform: none !important;      /* kill any inherited transform */
+  animation: none !important;       /* kill any inherited animation */
+}
